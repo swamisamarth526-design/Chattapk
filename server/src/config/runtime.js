@@ -1,8 +1,16 @@
+const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 
-const envPath = path.resolve(__dirname, '../../.env');
-dotenv.config({ path: envPath });
+const envPaths = [
+  path.resolve(__dirname, '../../.env'),
+  path.resolve(process.cwd(), '.env'),
+  path.resolve(__dirname, '../../../.env'),
+];
+
+envPaths.forEach((envPath) => {
+  dotenv.config({ path: envPath });
+});
 
 const DEFAULT_FRONTEND_ORIGIN = 'http://localhost:5173';
 const DEFAULT_MONGO_URI = 'mongodb://localhost:27017/chatx';
@@ -10,6 +18,10 @@ const DEFAULT_JWT_EXPIRE = '7d';
 const DEVELOPMENT_JWT_SECRET = 'chatx-dev-jwt-secret-change-me';
 
 const isProduction = process.env.NODE_ENV === 'production';
+
+function envFileExists() {
+  return envPaths.some((envPath) => fs.existsSync(envPath));
+}
 
 /**
  * Get allowed CORS origins
@@ -40,8 +52,12 @@ function getMongoUri() {
   }
 
   if (isProduction) {
+    const envHint = envFileExists()
+      ? 'Found a .env file but MONGODB_URI is missing from it.'
+      : 'Set the MONGODB_URI environment variable in your production deployment.';
+
     throw new Error(
-      'MONGODB_URI must be set in production. Set the environment variable in your production deployment.'
+      `MONGODB_URI must be set in production. ${envHint}`
     );
   }
 
@@ -54,8 +70,12 @@ function getJwtSecret() {
   }
 
   if (isProduction) {
+    const envHint = envFileExists()
+      ? 'Found a .env file but JWT_SECRET is missing from it.'
+      : 'Set JWT_SECRET in your production environment variables.';
+
     throw new Error(
-      'JWT_SECRET must be set in production. Set JWT_SECRET in your production environment variables or create server/.env for local development.'
+      `JWT_SECRET must be set in production. ${envHint}`
     );
   }
 
