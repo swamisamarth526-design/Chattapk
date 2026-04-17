@@ -1,0 +1,243 @@
+### Conversation APIs - REST Client Testing
+### Use with VS Code REST Client extension or Thunder Client
+
+@baseUrl = http://localhost:5000/api
+@token = YOUR_JWT_TOKEN_HERE
+
+### ═══════════════════════════════════════════════════════════════════════════
+### Setup: Create test users and get tokens
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Register User 1
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Alice Johnson",
+  "email": "alice@example.com",
+  "password": "AlicePass123",
+  "confirmPassword": "AlicePass123"
+}
+
+### Login User 1 (save token as @token)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "AlicePass123"
+}
+
+### Register User 2 (save this ID in @otherUserId)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Bob Smith",
+  "email": "bob@example.com",
+  "password": "BobPass123",
+  "confirmPassword": "BobPass123"
+}
+
+### Register User 3
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Charlie Davis",
+  "email": "charlie@example.com",
+  "password": "CharliePass123",
+  "confirmPassword": "CharliePass123"
+}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 1. GET ALL CONVERSATIONS
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Get all conversations (empty at start)
+GET {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+
+### Get all conversations (after creating some)
+GET {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 2. CREATE CONVERSATIONS
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Create conversation with Bob
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "507f1f77bcf86cd799439012"
+}
+
+### Create conversation with Charlie
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "507f1f77bcf86cd799439013"
+}
+
+### Create conversation again (should return existing, status 200)
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "507f1f77bcf86cd799439012"
+}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 3. GET CONVERSATION DETAILS
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Get conversation details (replace ID with real conversation ID)
+GET {{baseUrl}}/conversations/507f1f77bcf86cd799439014
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### ERROR CASES & VALIDATION
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Create conversation without otherUserId
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+}
+
+### Create conversation with invalid user ID format
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "invalid-id"
+}
+
+### Create conversation with non-existent user
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "000000000000000000000000"
+}
+
+### Create conversation with self
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "CURRENT_USER_ID_HERE"
+}
+
+### Get conversation with invalid ID format
+GET {{baseUrl}}/conversations/invalid-id
+Authorization: Bearer {{token}}
+
+### Get conversation with non-existent ID
+GET {{baseUrl}}/conversations/000000000000000000000000
+Authorization: Bearer {{token}}
+
+### Get conversation (unauthorized - not participant)
+### First create conversation with friend, then try accessing with different user
+GET {{baseUrl}}/conversations/507f1f77bcf86cd799439014
+Authorization: Bearer DIFFERENT_USER_TOKEN_HERE
+
+### ═══════════════════════════════════════════════════════════════════════════
+### AUTHENTICATION ERRORS
+### ═══════════════════════════════════════════════════════════════════════════
+
+### No authorization header
+GET {{baseUrl}}/conversations
+
+### Invalid token
+GET {{baseUrl}}/conversations
+Authorization: Bearer invalid-token-here
+
+### Expired token (after manually setting old token)
+GET {{baseUrl}}/conversations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature
+
+### ═══════════════════════════════════════════════════════════════════════════
+### CONVERSATION WORKFLOW
+### ═══════════════════════════════════════════════════════════════════════════
+
+### 1. Get current user's conversations
+GET {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+
+### 2. Start new conversation with a user
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "NEW_USER_ID"
+}
+
+### 3. Get that conversation details
+GET {{baseUrl}}/conversations/RETURNED_CONVERSATION_ID
+Authorization: Bearer {{token}}
+
+### 4. Later: Create conversation again (idempotent - returns same conversation)
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "SAME_USER_ID"
+}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### NOTES FOR TESTING
+### ═══════════════════════════════════════════════════════════════════════════
+###
+### 1. Replace {{token}} with actual JWT token from login response
+###    Steps:
+###    a. Run login request
+###    b. Copy token from response data.token
+###    c. Set @token = <copied_token>
+###
+### 2. Replace user IDs with actual MongoDB ObjectIds from your database
+###    - Get from create response or search users endpoint
+###    - Format: 24-character hex string (e.g., 507f1f77bcf86cd799439012)
+###
+### 3. Test Behaviors:
+###    - POST endpoint returns 201 for new conversation
+###    - POST endpoint returns 200 for existing conversation
+###    - POST is idempotent (calling twice returns same conversation)
+###    - GET returns 200 only if user is participant (403 if not)
+###    - Lists are sorted by updatedAt (newest first)
+###
+### 4. Expected Response Format:
+###    {
+###      "success": true/false,
+###      "data": { /* response data */ },
+###      "message": "Success or error message",
+###      "statusCode": 200/201/400/403/404
+###    }
+###
+### 5. Conversation Object Fields:
+###    - _id: conversation ID
+###    - otherUser: conversation partner details (in list & create)
+###    - participants: both users (in detail endpoint)
+###    - lastMessage: most recent message with sender info (or null)
+###    - unreadCount: unread messages for current user
+###    - updatedAt: last activity timestamp
+###    - createdAt: conversation creation timestamp
+###
+### 6. Test with Multiple Users:
+###    - Create conversations between different user pairs
+###    - Switch tokens to verify access control (403 for non-participants)
+###    - Verify unreadCount is independent per user
+###

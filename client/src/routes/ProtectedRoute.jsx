@@ -1,0 +1,1 @@
+// Protected route component

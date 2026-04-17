@@ -1,0 +1,30 @@
+{
+  "name": "chatx",
+  "version": "1.0.0",
+  "description": "Full-stack real-time chat application built with MERN + Socket.IO",
+  "private": true,
+  "type": "commonjs",
+  "engines": {
+    "node": "18.x"
+  },
+  "scripts": {
+    "install-all": "npm install --prefix client && npm install --prefix server",
+    "postinstall": "npm run install-all",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "npm run build --prefix client",
+    "build:server": "npm run build --prefix server",
+    "start": "cd server && npm start",
+    "dev": "npm run dev --prefix server",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server"
+  },
+  "keywords": [
+    "chat",
+    "real-time",
+    "socket.io",
+    "mern",
+    "messaging"
+  ],
+  "author": "",
+  "license": "ISC"
+}

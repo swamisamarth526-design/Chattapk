@@ -1,0 +1,204 @@
+### User APIs - REST Client Testing
+### Use with VS Code REST Client extension or Thunder Client
+
+@baseUrl = http://localhost:5000/api
+@token = YOUR_JWT_TOKEN_HERE
+
+### ═══════════════════════════════════════════════════════════════════════════
+### Setup: Get a valid JWT token first
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Register a test user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test User One",
+  "email": "testuser1@example.com",
+  "password": "TestPassword123",
+  "confirmPassword": "TestPassword123"
+}
+
+### Register another test user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Alice Johnson",
+  "email": "alice@example.com",
+  "password": "AlicePassword123",
+  "confirmPassword": "AlicePassword123"
+}
+
+### Register third user for search testing
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Bob Smith",
+  "email": "bob@example.com",
+  "password": "BobPassword123",
+  "confirmPassword": "BobPassword123"
+}
+
+### Login to get token (use one of the emails above)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser1@example.com",
+  "password": "TestPassword123"
+}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 1. GET ALL USERS (DISCOVER)
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Get all users (default pagination - 20 per page)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+### Get all users with custom limit
+GET {{baseUrl}}/users?limit=5
+Authorization: Bearer {{token}}
+
+### Get all users with offset (pagination)
+GET {{baseUrl}}/users?limit=10&offset=0
+Authorization: Bearer {{token}}
+
+### Get next page of users
+GET {{baseUrl}}/users?limit=10&offset=10
+Authorization: Bearer {{token}}
+
+### Get single page (small limit for testing)
+GET {{baseUrl}}/users?limit=2&offset=0
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 2. SEARCH USERS
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Search by name (simple)
+GET {{baseUrl}}/users/search?q=alice
+Authorization: Bearer {{token}}
+
+### Search by email
+GET {{baseUrl}}/users/search?q=bob@example.com
+Authorization: Bearer {{token}}
+
+### Search with partial name
+GET {{baseUrl}}/users/search?q=john
+Authorization: Bearer {{token}}
+
+### Search case-insensitive
+GET {{baseUrl}}/users/search?q=ALICE
+Authorization: Bearer {{token}}
+
+### Search with pagination
+GET {{baseUrl}}/users/search?q=test&limit=5&offset=0
+Authorization: Bearer {{token}}
+
+### Search with limit
+GET {{baseUrl}}/users/search?q=Smith&limit=2
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 3. GET USER PROFILE BY ID
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Get specific user profile (replace with real ObjectId)
+### First, search to get a user ID, then use it here
+GET {{baseUrl}}/users/507f1f77bcf86cd799439011
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### ERROR CASES & VALIDATION
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Search without query parameter
+GET {{baseUrl}}/users/search
+Authorization: Bearer {{token}}
+
+### Search with empty query
+GET {{baseUrl}}/users/search?q=
+Authorization: Bearer {{token}}
+
+### Search with query too short (only 1 char)
+GET {{baseUrl}}/users/search?q=a
+Authorization: Bearer {{token}}
+
+### Search with query too long (more than 100 chars)
+GET {{baseUrl}}/users/search?q=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Authorization: Bearer {{token}}
+
+### Invalid user ID format
+GET {{baseUrl}}/users/invalid-id
+Authorization: Bearer {{token}}
+
+### Non-existent user ID (valid format)
+GET {{baseUrl}}/users/000000000000000000000000
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### AUTHENTICATION ERRORS
+### ═══════════════════════════════════════════════════════════════════════════
+
+### No authorization header
+GET {{baseUrl}}/users
+
+### Invalid token
+GET {{baseUrl}}/users
+Authorization: Bearer invalid-token-here
+
+### Malformed token
+GET {{baseUrl}}/users
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.invalid.signature
+
+### ═══════════════════════════════════════════════════════════════════════════
+### PAGINATION TESTING
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Pagination with invalid limit (negative)
+GET {{baseUrl}}/users?limit=-5
+Authorization: Bearer {{token}}
+
+### Pagination with invalid offset (negative)
+GET {{baseUrl}}/users?offset=-1
+Authorization: Bearer {{token}}
+
+### Pagination with limit exceeding max (>100)
+GET {{baseUrl}}/users?limit=150
+Authorization: Bearer {{token}}
+
+### Pagination with non-numeric values (should use defaults)
+GET {{baseUrl}}/users?limit=abc&offset=xyz
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### NOTES
+### ═══════════════════════════════════════════════════════════════════════════
+###
+### 1. Replace {{token}} with actual JWT token from login response
+###    Example: Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+###
+### 2. Replace user IDs with actual MongoDB ObjectIds from your database
+###    Get them from search results or getAllUsers responses
+###
+### 3. Expected behavior:
+###    - Current logged-in user never appears in results
+###    - Search is case-insensitive
+###    - Results sorted: users by creation date descending, search by name ascending
+###    - Pagination: hasMore indicates if more results available
+###
+### 4. Response format:
+###    {
+###      "success": true/false,
+###      "data": { /* response data */ },
+###      "message": "Success or error message",
+###      "statusCode": 200/400/401/404
+###    }
+###
+### 5. Safe fields returned (sensitive fields excluded):
+###    - _id, name, email, avatar, lastSeen, createdAt
+###    - Never: password, __v, or internal fields
+###

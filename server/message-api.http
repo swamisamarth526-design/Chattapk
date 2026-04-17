@@ -1,0 +1,355 @@
+### Message APIs - REST Client Testing
+### Use with VS Code REST Client extension or Thunder Client
+
+@baseUrl = http://localhost:5000/api
+@token = YOUR_JWT_TOKEN_HERE
+@conversationId = YOUR_CONVERSATION_ID_HERE
+@messageId = YOUR_MESSAGE_ID_HERE
+
+### ═══════════════════════════════════════════════════════════════════════════
+### Setup: Create users, conversation, and get tokens
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Register User 1
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Alice Johnson",
+  "email": "alice@example.com",
+  "password": "AlicePass123",
+  "confirmPassword": "AlicePass123"
+}
+
+### Login User 1 (save token as @token)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "alice@example.com",
+  "password": "AlicePass123"
+}
+
+### Register User 2
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Bob Smith",
+  "email": "bob@example.com",
+  "password": "BobPass123",
+  "confirmPassword": "BobPass123"
+}
+
+### Create conversation (save ID as @conversationId)
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "BOB_USER_ID_HERE"
+}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 1. SEND MESSAGES
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Send first message
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "text": "Hey Bob! How are you?"
+}
+
+### Send second message (save message ID as @messageId)
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "text": "This is a test message"
+}
+
+### Send third message
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "text": "Let me know when you're available!"
+}
+
+### Send message with special characters
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "text": "Hello! 👋 Check this out: https://example.com 🎉"
+}
+
+### Send message with extra whitespace (tests trimming)
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "text": "   Message with extra spaces   "
+}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 2. GET MESSAGES (PAGINATED)
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Get all messages (default pagination)
+GET {{baseUrl}}/messages/{{conversationId}}
+Authorization: Bearer {{token}}
+
+### Get messages with custom limit
+GET {{baseUrl}}/messages/{{conversationId}}?limit=2
+Authorization: Bearer {{token}}
+
+### Get messages page 1 with limit 2
+GET {{baseUrl}}/messages/{{conversationId}}?page=1&limit=2
+Authorization: Bearer {{token}}
+
+### Get messages page 2
+GET {{baseUrl}}/messages/{{conversationId}}?page=2&limit=2
+Authorization: Bearer {{token}}
+
+### Get messages with large limit
+GET {{baseUrl}}/messages/{{conversationId}}?limit=50
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### 3. MARK MESSAGES AS READ
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Mark message as read (replace {{messageId}} with real ID from send response)
+PATCH {{baseUrl}}/messages/{{messageId}}/read
+Authorization: Bearer {{token}}
+
+### Mark another message as read
+PATCH {{baseUrl}}/messages/MESSAGE_ID_2_HERE/read
+Authorization: Bearer {{token}}
+
+### Mark message as read again (idempotent test)
+PATCH {{baseUrl}}/messages/{{messageId}}/read
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### ERROR CASES & VALIDATION
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Send message without text
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}"
+}
+
+### Send message without conversation ID
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "text": "Hello world"
+}
+
+### Send empty message
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "text": ""
+}
+
+### Send message with text too long (>5000 chars)
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "text": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}
+
+### Send message with invalid conversation ID format
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "invalid-id",
+  "text": "Hello"
+}
+
+### Send message with non-existent conversation
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "000000000000000000000000",
+  "text": "Hello"
+}
+
+### Get messages with invalid conversation ID
+GET {{baseUrl}}/messages/invalid-id
+Authorization: Bearer {{token}}
+
+### Get messages from non-existent conversation
+GET {{baseUrl}}/messages/000000000000000000000000
+Authorization: Bearer {{token}}
+
+### Get messages as non-participant (unauthorized)
+### First create conversation between Alice and Bob, then try accessing with Charlie
+GET {{baseUrl}}/messages/ALICE_BOB_CONV_ID
+Authorization: Bearer CHARLIE_TOKEN_HERE
+
+### Mark invalid message ID as read
+PATCH {{baseUrl}}/messages/invalid-id/read
+Authorization: Bearer {{token}}
+
+### Mark non-existent message as read
+PATCH {{baseUrl}}/messages/000000000000000000000000/read
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### PAGINATION TESTING
+### ═══════════════════════════════════════════════════════════════════════════
+
+### Get messages with invalid page (0)
+GET {{baseUrl}}/messages/{{conversationId}}?page=0
+Authorization: Bearer {{token}}
+
+### Get messages with invalid limit (0)
+GET {{baseUrl}}/messages/{{conversationId}}?limit=0
+Authorization: Bearer {{token}}
+
+### Get messages with limit exceeding max (>100)
+GET {{baseUrl}}/messages/{{conversationId}}?limit=200
+Authorization: Bearer {{token}}
+
+### Get messages with non-numeric pagination
+GET {{baseUrl}}/messages/{{conversationId}}?page=abc&limit=xyz
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### AUTHENTICATION ERRORS
+### ═══════════════════════════════════════════════════════════════════════════
+
+### No authorization header
+GET {{baseUrl}}/messages/{{conversationId}}
+
+### Invalid token
+GET {{baseUrl}}/messages/{{conversationId}}
+Authorization: Bearer invalid-token-here
+
+### Send message without token
+POST {{baseUrl}}/messages
+Content-Type: application/json
+
+{
+  "conversationId": "{{conversationId}}",
+  "text": "Hello"
+}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### MESSAGING WORKFLOW
+### ═══════════════════════════════════════════════════════════════════════════
+
+### 1. Create conversation with another user
+POST {{baseUrl}}/conversations
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "otherUserId": "OTHER_USER_ID"
+}
+
+### 2. Send initial message
+POST {{baseUrl}}/messages
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "conversationId": "CONV_ID",
+  "text": "Hey, want to chat?"
+}
+
+### 3. Load message history (page 1)
+GET {{baseUrl}}/messages/CONV_ID?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### 4. If hasMore=true, load next page
+GET {{baseUrl}}/messages/CONV_ID?page=2&limit=20
+Authorization: Bearer {{token}}
+
+### 5. Mark message as read
+PATCH {{baseUrl}}/messages/MSG_ID/read
+Authorization: Bearer {{token}}
+
+### ═══════════════════════════════════════════════════════════════════════════
+### NOTES FOR TESTING
+### ═══════════════════════════════════════════════════════════════════════════
+###
+### 1. Replace {{token}} with actual JWT token from login response
+###    - Run login request
+###    - Copy data.token
+###    - Set @token = <copied_token>
+###
+### 2. Replace {{conversationId}} with actual conversation ID
+###    - Run conversation creation or GET /api/conversations
+###    - Copy conversation._id
+###    - Set @conversationId = <copied_id>
+###
+### 3. Replace {{messageId}} with actual message ID from send response
+###    - Run send message request
+###    - Copy _id from response
+###    - Set @messageId = <copied_id>
+###
+### 4. Message Order:
+###    - GET returns messages OLDEST TO NEWEST (natural chat order)
+###    - Database stores with ascending timestamps
+###    - Frontend appends new, loads old at top
+###
+### 5. Pagination:
+###    - page=1, limit=20 → messages 1-20
+###    - Check hasMore: true to continue
+###    - Don't miss pages or you'll have gaps
+###
+### 6. Read Receipts:
+###    - readBy array tracks who read the message
+###    - Each entry has userId and readAt timestamp
+###    - Frontend can show "Read by" indicator
+###
+### 7. Response Schema:
+###    {
+###      "success": true/false,
+###      "data": { /* message/pagination data */ },
+###      "message": "Success or error message",
+###      "statusCode": 200/201/400/403/404
+###    }
+###
+### 8. Test Flow:
+###    a. Create two users and login (get tokens)
+###    b. Use User 1 token to create conversation with User 2
+###    c. User 1 sends messages
+###    d. User 1 retrieves messages (verify order and content)
+###    e. User 1 marks messages as read
+###    f. Test unauthorized access (use User 2 or non-participant)
+###    g. Test validation (empty text, invalid IDs, etc.)
+###

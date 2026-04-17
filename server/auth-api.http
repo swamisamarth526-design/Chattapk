@@ -1,0 +1,133 @@
+@baseUrl = http://localhost:5000
+@token = 
+
+# ============================================
+# ChatX Authentication API Tests
+# ============================================
+# This file can be used with REST Client VS Code extension
+# or Thunder Client for easy API testing
+
+### 1. Register New User
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "Password123",
+  "confirmPassword": "Password123"
+}
+
+### 2. Register Another User
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Jane Smith",
+  "email": "jane@example.com",
+  "password": "SecurePass456",
+  "confirmPassword": "SecurePass456"
+}
+
+### 3. Login User (John)
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "Password123"
+}
+
+# After logging in, copy the token from response and set it above
+# @token = <your_token_here>
+
+### 4. Get Current User
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### 5. Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{token}}
+
+# ============================================
+# Error Cases - Testing
+# ============================================
+
+### Register with Invalid Email
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Invalid User",
+  "email": "not-an-email",
+  "password": "Password123",
+  "confirmPassword": "Password123"
+}
+
+### Register with Short Password
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Short Pass",
+  "email": "short@example.com",
+  "password": "123",
+  "confirmPassword": "123"
+}
+
+### Register with Mismatched Passwords
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Mismatch User",
+  "email": "mismatch@example.com",
+  "password": "Password123",
+  "confirmPassword": "DifferentPassword"
+}
+
+### Register Duplicate Email
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "name": "Another Name",
+  "email": "john@example.com",
+  "password": "Password123",
+  "confirmPassword": "Password123"
+}
+
+### Login with Wrong Password
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "WrongPassword"
+}
+
+### Login with Non-existent Email
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "Password123"
+}
+
+### Get User Without Token
+GET {{baseUrl}}/api/auth/me
+
+### Get User with Invalid Token
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer invalid.token.here
+
+### Logout Without Token
+POST {{baseUrl}}/api/auth/logout
+
+# ============================================
+# Health Check
+# ============================================
+
+### Health Endpoint
+GET {{baseUrl}}/health
