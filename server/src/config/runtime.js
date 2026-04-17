@@ -34,7 +34,9 @@ function getMongoUri() {
   }
 
   if (isProduction) {
-    throw new Error('MONGODB_URI must be set in production.');
+    throw new Error(
+      'MONGODB_URI must be set in production. Set the environment variable in your production deployment.'
+    );
   }
 
   return DEFAULT_MONGO_URI;
@@ -46,7 +48,9 @@ function getJwtSecret() {
   }
 
   if (isProduction) {
-    throw new Error('JWT_SECRET must be set in production.');
+    throw new Error(
+      'JWT_SECRET must be set in production. Set JWT_SECRET in your production environment variables or create server/.env for local development.'
+    );
   }
 
   return DEVELOPMENT_JWT_SECRET;
