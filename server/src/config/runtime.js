@@ -1,3 +1,9 @@
+const path = require('path');
+const dotenv = require('dotenv');
+
+const envPath = path.resolve(__dirname, '../../.env');
+dotenv.config({ path: envPath });
+
 const DEFAULT_FRONTEND_ORIGIN = 'http://localhost:5173';
 const DEFAULT_MONGO_URI = 'mongodb://localhost:27017/chatx';
 const DEFAULT_JWT_EXPIRE = '7d';
